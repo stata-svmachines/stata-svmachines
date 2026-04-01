@@ -1,0 +1,84 @@
+name: Build
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install libsvm (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libsvm-dev
+
+      - name: Install libsvm (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install libsvm
+          echo "CPATH=$(brew --prefix libsvm)/include" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$(brew --prefix libsvm)/lib" >> $GITHUB_ENV
+
+      - name: Set up MSYS2 with MinGW (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: make mingw-w64-x86_64-gcc
+
+      - name: Build
+        if: runner.os != 'Windows'
+        working-directory: src
+        run: |
+          make
+          make dist
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        working-directory: src
+        run: |
+          make
+          make dist
+
+      - name: Upload bin
+        uses: actions/upload-artifact@v7
+        with:
+          name: bin-${{ runner.os }}
+          path: src/bin/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all platform bins
+        uses: actions/download-artifact@v8
+        with:
+          pattern: bin-*
+          path: src/bin/
+          merge-multiple: true
+
+      - name: Build release package
+        working-directory: src
+        run: make release
+
+      - name: Upload release zip
+        uses: actions/upload-artifact@v7
+        with:
+          name: svmachines
+          path: svmachines.zip
+          archive: false
