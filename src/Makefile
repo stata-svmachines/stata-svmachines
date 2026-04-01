@@ -114,7 +114,12 @@ include $(OS).mk
 ifeq ($(OS),Windows_NT)
   PLATFORM:=WIN
 else ifeq ($(OS),Darwin)
-  PLATFORM:=MACINTEL
+  UNAME_M := $(shell uname -m)
+  ifeq ($(UNAME_M),arm64)
+    PLATFORM = MACARM64
+  else
+    PLATFORM = MACINTEL
+  endif
 else
   PLATFORM:=LINUX
 endif
