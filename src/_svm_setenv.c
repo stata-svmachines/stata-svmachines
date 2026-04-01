@@ -8,18 +8,6 @@
 
 #ifdef _WIN32
 
-#ifdef __MINGW32__
-/* MINGW defines _wgetenv_s(), but not getenv_s */
-/* however, it *is* in the runtime .dll, so if we just add it here we're good */
-/* MINGW wants you to use getenv(), I suppose, but getenv() makes */
-errno_t getenv_s( 
-   size_t *pReturnValue,
-   char* buffer,
-   size_t numberOfElements,
-   const char *varname 
-);
-#endif
-
 /* from http://stackoverflow.com/questions/17258029/c-setenv-undefined-identifier-in-visual-studio */
 int setenv(const char *name, const char *value, int overwrite)
 {
