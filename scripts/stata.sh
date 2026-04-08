@@ -52,9 +52,17 @@ fi
 LOG="$CRUFT"/session.log
 RC="$CRUFT"/rc
 
+# -e is undocumented; it means 'do not log to stdout'
 $STATA -q -e do "$WRAPPER" "$SCRIPT" "$LOG" "$RC"
 
-cat $LOG
+# tail/head crop the unavoidable header/footer:
+#
+# . capture noisily do "`script'"
+# . quietly log close
+# .
+# .
+# end of do-file
+cat "$LOG" | tail -n +3 | head -n -4
 RC=$(cat "$RC")
 rm -r $CRUFT
 exit $RC

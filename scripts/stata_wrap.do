@@ -22,9 +22,9 @@ if("`TRACE'"!="") {
 args script log rc_log
 //di as err "script = `script', log = `log', rc = `rc_log'"
 
-log using "`log'", text replace
+quietly log using "`log'", text replace
 capture noisily do "`script'"
-log close
+quietly log close
 //di as err "rc = `=_rc'"
 tempname fd
 file open `fd' using "`rc_log'", write text replace
