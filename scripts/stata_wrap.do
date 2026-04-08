@@ -19,6 +19,12 @@ if("`TRACE'"!="") {
   set more off
 }
 
+quietly local adopath_addition : env ADOPATH
+quietly display "`adopath_addition'"
+if `"`adopath_addition'"' != "" {
+    quietly adopath ++ `"`adopath_addition'"'
+}
+
 args script log rc_log
 //di as err "script = `script', log = `log', rc = `rc_log'"
 
