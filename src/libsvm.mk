@@ -5,7 +5,7 @@
 # is not worth it. So we just build it statically and build it into the DLLs we ship.
 
 # this is a version pin
-LIBSVM_VERSION := 325
+LIBSVM_VERSION := 330
 
 libsvm-v$(LIBSVM_VERSION)/svm.cpp:
 	mkdir -p libsvm-v$(LIBSVM_VERSION)
