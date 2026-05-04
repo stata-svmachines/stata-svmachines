@@ -1,0 +1,38 @@
+FROM ubuntu:24.04
+ARG STATA_INSTALLER=./Stata15Linux64.tar.gz
+ARG UBUNTU_MIRROR=ca.archive.ubuntu.com
+LABEL org.opencontainers.image.source https://github.com/stata-svmachines/stata-installers
+
+## install backports for older Stata
+
+# these two are close enough that a symlink makes Stata happy
+RUN sed -i "s|archive.ubuntu.com|${UBUNTU_MIRROR}|g" /etc/apt/sources.list.d/ubuntu.sources
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && \
+    apt-get install -y build-essential && \
+    apt-get install -y libncurses6 libtinfo6 && \
+    ln -sf libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5 && \
+    ln -sf libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
+
+# but libpng12 is quite a bit older so we need to build it from source
+RUN DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y curl zlib1g-dev && \
+  ( \
+    WORK=$(mktemp -d) && \
+    trap "rm -r $WORK" EXIT && \
+    ( \
+      cd $WORK && \
+      curl -JLO https://sourceforge.net/projects/libpng/files/libpng12/1.2.59/libpng-1.2.59.tar.gz && \
+      tar xzf libpng-1.2.59.tar.gz && \
+      cd libpng-1.2.59 && \
+      ./configure --prefix=/usr/ && \
+      make -j$(nproc) && \
+      make install \
+    ) \
+  )
+
+RUN --mount=type=bind,source=${STATA_INSTALLER},target=/var/run/stata-installer.tgz \
+  mkdir -p /usr/local/stata && \
+  cd /usr/local/stata && \
+  tar xvf /var/run/stata-installer.tgz && \
+  (yes | ./install)
+ENV PATH="/usr/local/stata:$PATH"

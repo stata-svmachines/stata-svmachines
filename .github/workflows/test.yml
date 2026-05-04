@@ -1,0 +1,37 @@
+name: Test
+
+on:
+  push:
+    branches: ["master"]
+    tags: ["*"]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - '.github/workflows/test.yml'
+  workflow_dispatch: # manual trigger
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/stata-svmachines/stata:15  # Private image built from scripts/tests/Containerfile.
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_TOKEN }}
+    steps:
+      - name: Inject license
+        run: |
+          echo "${{ secrets.STATA_LICENSE }}" > /usr/local/stata/stata.lic
+      - uses: actions/checkout@v6
+      - name: Test
+        run: |
+          cd src
+          make tests
